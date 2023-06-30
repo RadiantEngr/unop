@@ -5,7 +5,6 @@ RUN mkdir -p /unox-api && \
 RUN cd /unox-api && rm -rf *
 WORKDIR /unox-api
 ADD package.json /unox-api/package.json
-ADD yarn.lock /unox-api/yarn.lock
 RUN yarn && \
     yarn global add pm2
 COPY . /unox-api
