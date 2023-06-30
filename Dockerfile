@@ -10,7 +10,4 @@ RUN yarn && \
 COPY . /unox-api
 RUN yarn tsc
 EXPOSE 4000
-RUN chown -R appuser:appuser /logs && \
-    chown -R appuser:appuser /unox-api
-USER appuser
 CMD [ "node", "dist/server.js" ]
