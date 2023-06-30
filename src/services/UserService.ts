@@ -199,7 +199,7 @@ export default {
             
             return {
                 success: true,
-                message: "User verification successful",
+                message: "User login successful",
                 loggedInUser
             }
         }
