@@ -1,4 +1,4 @@
-FROM node:v16
+FROM node:16
 LABEL Unox Developers <developers@unox.one>
 RUN mkdir -p /unox-api && \
     mkdir -p /logs 
