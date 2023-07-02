@@ -88,6 +88,7 @@ export default {
             return {success: false, message: "User does not exist"}
         }               
         const otp = Utils.getRandomNumber(config.otpLength);
+        
         const userOtp = new UserOtp({
             user: user?._id,
             otp,
@@ -96,30 +97,32 @@ export default {
         });        
 
         const splitOtp = Utils.splitNumberIntoDigits(Number(otp));
+        const filledOtp = Utils.fillArrayWithZeros(splitOtp);
+        
         const globalMergeVars = [
             {
                 name: "A",
-                content: splitOtp[0]
+                content: filledOtp[0]
             },
             {
                 name: "B",
-                content: splitOtp[1]
+                content: filledOtp[1]
             },
             {
                 name: "C",
-                content: splitOtp[2]
+                content: filledOtp[2]
             },
             {
                 name: "D",
-                content: splitOtp[3]
+                content: filledOtp[3]
             },
             {
                 name: "E",
-                content: splitOtp[4]
+                content: filledOtp[4]
             },
             {
                 name: "F",
-                content: splitOtp[5]
+                content: filledOtp[5]
             }
         ]
       

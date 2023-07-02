@@ -1,3 +1,6 @@
+import config from "../config";
+
+
 export default {
     getRandomNumber: (length: number) => {
         const char = '0123456789';
@@ -13,5 +16,14 @@ export default {
     splitNumberIntoDigits: (num: number) => {
       const digits = num.toString().split('');
       return digits.map(Number);
+    },
+
+    fillArrayWithZeros: (arr: number[]) => {
+      const newArray = [...arr];
+      while (newArray.length < config.otpLength) {
+        newArray.unshift(0);
+      }
+    
+      return newArray;
     }
 };
