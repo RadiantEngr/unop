@@ -87,7 +87,8 @@ export default {
         if (!user) {
             return {success: false, message: "User does not exist"}
         }               
-        const otp = Utils.getRandomNumber(config.otpLength);
+        // const otp = Utils.getRandomNumber(config.otpLength);
+        const otp = "123456";
         
         const userOtp = new UserOtp({
             user: user?._id,
