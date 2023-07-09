@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import _ from "lodash";
 import moment from "moment";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import User from "../models/User";
 import UserOtp from "../models/UserOtp";
 import Utils from "./Utils";
@@ -11,40 +12,31 @@ import config from "../config";
 import MailTemplates from "../enums/MandrillTemplates";
 import VerificationType from "../enums/VerificationType";
 import LoginType from "../enums/LoginType";
-import SignupType from "../enums/SignupType";
+import PasswordResetToken from "../models/PasswordResetToken";
+import EmailSender from "../enums/EmailSender";
 
 
 export default {
     signup: async (req: Request)  => {
-        const { signupType } = req.query;
-        if (!signupType) {
+        const { email, username} = req.body;
+        const user = await User.findOne({$or: [{ email }, { username }]});
+        if (user) {
             return {
                 success: false,
-                message: "Signup type not specified"
+                message: "User already exists"
             }
         }
 
-        if (signupType.toString().toLocaleLowerCase() === SignupType.PASSWORD) {
-            const { email, username} = req.body;
-            const user = await User.findOne({$or: [{ email }, { username }]});
-            if (user) {
-                return {
-                    success: false,
-                    message: "User already exists"
-                }
-            }
+        req.body.email = _.trim(email.toLowerCase());
+        req.body.username = !username ? email : username;
+        const savedUser = await User.create(req.body);
+        console.info(`User cretaed: ${email}`);
 
-            req.body.email = _.trim(email.toLowerCase());
-            req.body.username = !username ? email : username;
-            const savedUser = await User.create(req.body);
-            console.info(`User cretaed: ${email}`);
-
-            return {
-                success: true,
-                message: "User registration successful",
-                savedUser
-            }
-        }
+        return {
+            success: true,
+            message: "User registration successful",
+            savedUser
+        };
     },
 
     getAllUsers: async () => {
@@ -128,7 +120,7 @@ export default {
         ]
       
         try {
-          await Promise.all([userOtp.save(), emailService.sendTemplateEmail(MailTemplates.OTP, "VERIFICATION OTP", "noreply@unox.one", [{ email }], globalMergeVars)]);
+          await Promise.all([userOtp.save(), emailService.sendTemplateEmail(MailTemplates.OTP, "VERIFICATION OTP", EmailSender.NO_REPLY, [{ email }], globalMergeVars)]);
           return {success: true, message: "OTP sent to your email address"}
         } catch (err) {
           console.warn(`${email} -> OTP persistence error: ${err}`);
@@ -207,7 +199,90 @@ export default {
                 loggedInUser
             }
         }
-    }
+    },
+
+    requestPasswordReset: async (req: Request) => {
+        const { email, username } = req.body;
+        if (!email && !username) {
+            return {
+                success: false,
+                message: "Client's 'username' or 'email' must be provided"
+            }
+        }
+
+        const user = await User.findOne({$or: [{ email }, { username }]});        
+        if (!user) {
+            return {
+                success: false,
+                message: "User does not exist"
+            }
+        }
+
+        const token = crypto.randomBytes(config.tokenLength).toString('hex');
+        const resetToken = new PasswordResetToken({
+            user: user._id,
+            token,
+            expiryTime: moment().add(config.otpValidityInMinutes, "minutes").toDate(),
+            sentTo: user.email
+        });
+
+        const globalMergeVars = [
+            {
+                name: "user",
+                content: user.fullName? user.fullName.split(" ")[0] : user.username ? user.username : user.email
+            }
+        ]
+      
+        try {
+            await Promise.all([resetToken.save(), emailService.sendTemplateEmail(MailTemplates.RESET_PASSWORD, "RESET PASSWORD", EmailSender.NO_REPLY, [{ email: user.email }], globalMergeVars)]);
+            return {
+                success: true,
+                message: "Password reset email sent",
+                token
+            }
+        } catch (err) {
+          console.warn(`${email} -> Paaword reset token persistence error: ${err}`);
+          return {success: false, message: "Could not send password reset token"};
+        }
+    },
+
+    resetPassword: async (req: Request) => {
+        const { token } = req.params;
+        const { newPassword, confirmNewPassword } = req.body;
+        if (!newPassword || !confirmNewPassword) {
+            return {
+                success: false,
+                message: "'newPassword' and 'confirmNewPassword' are required fields"
+            }
+        }
+
+        if (newPassword !== confirmNewPassword) {
+            return {
+                success: false,
+                message: "The password values provided are not consistent"
+            }
+        }
+
+        const expectedToken = await PasswordResetToken.findOne({
+            token,
+            expiryTime: {$gte: new Date()}
+        });
+
+        if (!expectedToken) {
+            return {
+                success: false,
+                message: "Invalid or expired token"
+            }
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, config.saltRounds)
+        await User.findByIdAndUpdate(expectedToken.user, {password: hashedPassword}, {new: true});
+    
+        return {
+            success: true,
+            message: "Password reset successful"
+        };
+    }    
 };
 
 const verifyOtp = async (req: Request) => {

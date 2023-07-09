@@ -1,14 +1,14 @@
 import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 
-const userOtpSchema = new Schema({
+const resetTokenSchema = new Schema({
   user: {
     type: Schema.Types.ObjectId,
     ref: "User",
     index: true,
     required: true
   },
-  otp: {
+  token: {
     type: String,
     required: true
   },
@@ -25,6 +25,6 @@ const userOtpSchema = new Schema({
   versionKey: false 
 });
 
-const UserOtp = mongoose.model("UserOtp", userOtpSchema, "user_otp");
+const PasswordResetToken = mongoose.model("PasswordResetToken", resetTokenSchema, "password_reset_token");
 
-export default UserOtp;
+export default PasswordResetToken;

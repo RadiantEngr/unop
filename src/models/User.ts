@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema({
     },
 }, { timestamps: true })
 
-userSchema.pre('save', async function (next) {
+userSchema.pre("save", async function (next) {
     if (this.password) {
       this.password = await bcrypt.hash(this.password, config.saltRounds);
     }
@@ -49,14 +49,14 @@ userSchema.pre('save', async function (next) {
   });
 
 //prevent password and __v field from being sent on data fetch
-userSchema.set('toJSON', {
+userSchema.set("toJSON", {
     transform: function(doc, ret, opt) {
-        delete ret['password']
-        delete ret['__v']
+        delete ret["password"]
+        delete ret["__v"]
         return ret
     }
 })
 
-const User = mongoose.model('User', userSchema, 'user');
+const User = mongoose.model("User", userSchema, "user");
 
 export default User;

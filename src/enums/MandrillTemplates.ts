@@ -1,5 +1,6 @@
 const MailTemplates = {
-    OTP: "verification-otp"
+    OTP: "verification-otp",
+    RESET_PASSWORD: "reset-password"
 }
 
 export default MailTemplates;

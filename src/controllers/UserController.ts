@@ -1,4 +1,3 @@
-
 import { Request, Response } from "express";
 import UserService from '../services/UserService';
 import Validator from "../models/Validator";
@@ -105,5 +104,36 @@ export default {
       }
 
       return sendResponse(req, res, 200, "User login attempt", response);
-    }
+    },
+
+    requestPasswordReset: async (req: Request, res: Response) => {
+      const response = await UserService.requestPasswordReset(req);
+      if (!response) {
+        return sendResponse(req, res, 400, "Password reset request failed");
+      }
+
+      if (!response.success) {
+        return sendResponse(req, res, 400, "Password reset request", response);
+      }
+
+      return sendResponse(req, res, 200, "Password reset request", response);
+    },
+
+    resetPassword: async (req: Request, res: Response) => {
+      try {
+        const response = await UserService.resetPassword(req);
+        if (!response) {
+          return sendResponse(req, res, 400, "Password reset failed");
+        }
+
+        if (!response.success) {
+          return sendResponse(req, res, 400, "Password reset request", response);
+        }
+
+        return sendResponse(req, res, 200, "Password reset request", response);
+      } catch (err) {
+        console.log(`Error while resetting password: ${err}`);
+        sendResponse(req, res, 500, `An error occured while processing this request: ${err}`);
+      }
+    },
 };

@@ -7,6 +7,9 @@ import dotenv from "dotenv";
 import HealthChecker from "./routes";
 import Router from "./routes/routeV1";
 import { connectToDatabase } from "./db/ConnectionFactory";
+import session from 'express-session';
+import googleAuth from "./middlewares/GoogleAuth";
+import config from "./config";
 
 
 const app = express();
@@ -18,6 +21,28 @@ app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
+
+app.use(session({
+      secret: config.sessionSecret,
+      resave: false,
+      saveUninitialized: false,
+    })
+);
+  
+// Configure Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+googleAuth();
+
+passport.serializeUser( (user, done) => {
+  done(null, user);
+});
+
+passport.deserializeUser( (user: any, done) => {
+  done(null, user);
+});
+  
 
 app.use("/", HealthChecker);
 app.use("/api", Router);
