@@ -20,10 +20,21 @@ const googleAuth = () => {
             const { email, name, email_verified } = profile._json;
             const user = await User.findOne({ email });
 
+            if (user) {
+                const userUpdate = { 
+                    fullName: user && user.fullName ? user.fullName : name,
+                    isVerified: email_verified,
+                    isLoggedIn: true,
+                    lastLoggedIn: new Date
+                };
+
+                await User.findOneAndUpdate({ email }, userUpdate, { new: true })
+            }
+
             const newUser = { 
                 email,
                 username: user && user.username ? user.username : email,
-                fullName: name, 
+                fullName: name,
                 isVerified: email_verified,
                 password: Utils.generatePassword(config.passLegth),
                 isLoggedIn: true,
