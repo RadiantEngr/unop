@@ -29,19 +29,19 @@ const googleAuth = () => {
                 };
 
                 await User.findOneAndUpdate({ email }, userUpdate, { new: true })
-            }
+            } else {
+                const newUser = { 
+                  email,
+                  username: email,
+                  fullName: name,
+                  isVerified: email_verified,
+                  password: Utils.generatePassword(config.passLegth),
+                  isLoggedIn: true,
+                  lastLoggedIn: new Date
+                };
 
-            const newUser = { 
-                email,
-                username: user && user.username ? user.username : email,
-                fullName: name,
-                isVerified: email_verified,
-                password: Utils.generatePassword(config.passLegth),
-                isLoggedIn: true,
-                lastLoggedIn: new Date
+                await User.create(newUser);
             }
-
-            await User.create(newUser);
 
             done(null, profile);
           }
